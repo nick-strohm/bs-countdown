@@ -113,10 +113,3 @@ If `Config.EnableCommands` is `true`, the following commands are available:
 ## License
 
 This resource is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Blaze Scripts
-
-Developed by **Blaze Scripts**.
-- 🔹 **Free Scripts**: [GitHub Repository](https://github.com/Blaze-Scripts)
-- 🔹 **Paid Scripts**: [Tebex Store](https://store.blazescripts.dev/)
-- 🔹 **Support**: [Join our Discord](https://discord.gg/xUcj2R4ZX4)
