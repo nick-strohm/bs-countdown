@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blaze Scripts Countdown</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+
+        <div v-for="timer in timers" 
+             :key="timer.displayId" 
+             class="timer-wrapper" 
+             :style="{ top: timer.position.top + '%', right: timer.position.right + '%', opacity: timer.opacity }">
+            
+            <div class="timer-main-row">
+                <div class="timer-icon-circle">
+                    <img src="images/bs-timer-icon.svg" alt="Timer Icon" class="timer-icon-img">
+                </div>
+                <div class="timer-content-col">
+                    <div class="timer-title" v-if="timer.title">{{ timer.title }}</div>
+                    <hr class="timer-hr" v-if="timer.title"/>
+                    <div class="timer-display" :class="{ 'flashing': timer.isFlashing }" :style="{'--flash-color': timer.flashColor }">
+                        {{ timer.timeLeftFormatted }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="timer-sound" src="sounds/timer_end.mp3"></audio>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>
