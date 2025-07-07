@@ -29,10 +29,10 @@ function startTimer(amount, unit, title)
     end
 
     local seconds = math.floor(amount * Config.TimeUnits[unit])
-    
+
     currentTimerId = currentTimerId + 1
     local timerId = currentTimerId
-    
+
     timers[timerId] = {
         id = timerId,
         startTime = GetGameTimer(),
@@ -44,64 +44,78 @@ function startTimer(amount, unit, title)
         displayId = nil,
         isFlashing = false
     }
-    
+
     activeTimerCount = activeTimerCount + 1
-    
-    CreateThread(function()
-        local timer = timers[timerId]
-        if not timer then return end
-        
-        if Config.Debug then
-            print(string.format("^2[bs-countdown]^7 Timer started: %d %s -> '%s' with ID %d", amount, unit, title, timerId))
-        end
-        
-        local displayId = showTimerDisplay(timerId, seconds)
-        timer.displayId = displayId
-        
-        local lastSecond = seconds
-        while timer and (GetGameTimer() - timer.startTime) < timer.duration do
-            local elapsedMs = GetGameTimer() - timer.startTime
-            local remainingMs = timer.duration - elapsedMs
-            local remainingSec = math.ceil(remainingMs / 1000)
-            
-            timer.timeLeft = remainingSec
-            
-            if remainingSec ~= lastSecond then
-                lastSecond = remainingSec
-                
-                local shouldFlash = remainingSec <= Config.UI.flashThreshold
-                if shouldFlash ~= timer.isFlashing then
-                    timer.isFlashing = shouldFlash
-                    updateTimerDisplay(timerId, remainingSec, shouldFlash)
-                    
-                    if shouldFlash and Config.Sound.enabled then
-                        SendNUIMessage({
-                            action = 'playSound',
-                            volume = Config.Sound.volume
-                        })
-                    end
-                else
-                    updateTimerDisplay(timerId, remainingSec)
-                end
+
+    CreateThread(
+        function()
+            local timer = timers[timerId]
+            if not timer then
+                return
             end
-            
-            Wait(100)
-        end
-        
-        if timers[timerId] then
-            hideTimerDisplay(timerId)
-            
+
             if Config.Debug then
-                print("^2[bs-countdown]^7 Timer finished")
+                print(
+                    string.format(
+                        "^2[bs-countdown]^7 Timer started: %d %s -> '%s' with ID %d",
+                        amount,
+                        unit,
+                        title,
+                        timerId
+                    )
+                )
             end
-            
-            TriggerEvent('bs-countdown:timerEnded', timerId)
-            
-            timers[timerId] = nil
-            activeTimerCount = activeTimerCount - 1
+
+            local displayId = showTimerDisplay(timerId, seconds)
+            timer.displayId = displayId
+
+            local lastSecond = seconds
+            while timer and (GetGameTimer() - timer.startTime) < timer.duration do
+                local elapsedMs = GetGameTimer() - timer.startTime
+                local remainingMs = timer.duration - elapsedMs
+                local remainingSec = math.ceil(remainingMs / 1000)
+
+                timer.timeLeft = remainingSec
+
+                if remainingSec ~= lastSecond then
+                    lastSecond = remainingSec
+
+                    local shouldFlash = remainingSec <= Config.UI.flashThreshold
+                    if shouldFlash ~= timer.isFlashing then
+                        timer.isFlashing = shouldFlash
+                        updateTimerDisplay(timerId, remainingSec, shouldFlash)
+
+                        if shouldFlash and Config.Sound.enabled then
+                            SendNUIMessage(
+                                {
+                                    action = "playSound",
+                                    volume = Config.Sound.volume
+                                }
+                            )
+                        end
+                    else
+                        updateTimerDisplay(timerId, remainingSec)
+                    end
+                end
+
+                Wait(100)
+            end
+
+            if timers[timerId] then
+                hideTimerDisplay(timerId)
+
+                if Config.Debug then
+                    print("^2[bs-countdown]^7 Timer finished")
+                end
+
+                TriggerEvent("bs-countdown:timerEnded", timerId, true)
+
+                timers[timerId] = nil
+                activeTimerCount = activeTimerCount - 1
+            end
         end
-    end)
-    
+    )
+
     return true, timerId
 end
 
@@ -115,35 +129,36 @@ function stopTimer(timerId)
             end
             return false
         end
-        
+
         for id, timer in pairs(timers) do
             if timer.displayId then
                 hideTimerDisplay(id)
             end
         end
-        
+
         timers = {}
         activeTimerCount = 0
-        
+
         if Config.Debug then
             print("^2[bs-countdown]^7 All timers stopped")
         end
-        
-        return true
-    else
-        if not timers[timerId] then
-            return false
-        end
-        
-        if timers[timerId].displayId then
-            hideTimerDisplay(timerId)
-        end
-        
-        timers[timerId] = nil
-        activeTimerCount = activeTimerCount - 1
-        
+
         return true
     end
+
+    if not timers[timerId] then
+        return false
+    end
+
+    if timers[timerId].displayId then
+        hideTimerDisplay(timerId)
+    end
+
+    TriggerEvent("bs-countdown:timerEnded", timerId, false)
+    timers[timerId] = nil
+    activeTimerCount = activeTimerCount - 1
+
+    return true
 end
 
 ---@return boolean isRunning
@@ -158,17 +173,19 @@ function showTimerDisplay(timerId, seconds)
     local displayId = findAvailableDisplayId()
     displayedTimers[displayId] = timerId
     local position = calculateDisplayPosition(displayId)
-    
-    SendNUIMessage({
-        action = 'showTimer',
-        timerId = timerId,
-        displayId = displayId,
-        duration = seconds,
-        title = timers[timerId].title,
-        fadeIn = Config.UI.fadeInDuration,
-        position = position
-    })
-    
+
+    SendNUIMessage(
+        {
+            action = "showTimer",
+            timerId = timerId,
+            displayId = displayId,
+            duration = seconds,
+            title = timers[timerId].title,
+            fadeIn = Config.UI.fadeInDuration,
+            position = position
+        }
+    )
+
     return displayId
 end
 
@@ -180,32 +197,42 @@ end
 ---@param flash boolean? Whether to flash
 function updateTimerDisplay(timerId, seconds, flash)
     local displayId = getDisplayIdForTimer(timerId)
-    if not displayId then return end
-    SendNUIMessage({
-        action = 'updateTimer',
-        displayId = displayId,
-        timeLeft = seconds,
-        flash = flash,
-        flashColor = Config.UI.flashColor
-    })
+    if not displayId then
+        return
+    end
+    SendNUIMessage(
+        {
+            action = "updateTimer",
+            displayId = displayId,
+            timeLeft = seconds,
+            flash = flash,
+            flashColor = Config.UI.flashColor
+        }
+    )
 end
 
 ---@param timerId number Timer ID
 function hideTimerDisplay(timerId)
     local displayId = getDisplayIdForTimer(timerId)
-    if not displayId then return end
-    SendNUIMessage({
-        action = 'hideTimer',
-        displayId = displayId,
-        fadeOut = Config.UI.fadeOutDuration
-    })
+    if not displayId then
+        return
+    end
+    SendNUIMessage(
+        {
+            action = "hideTimer",
+            displayId = displayId,
+            fadeOut = Config.UI.fadeOutDuration
+        }
+    )
     displayedTimers[displayId] = nil
 end
 
 ---@return number displayId
 function findAvailableDisplayId()
     local id = 1
-    while displayedTimers[id] ~= nil do id = id + 1 end
+    while displayedTimers[id] ~= nil do
+        id = id + 1
+    end
     return id
 end
 
@@ -213,7 +240,9 @@ end
 ---@return number? displayId
 function getDisplayIdForTimer(timerId)
     for id, tId in pairs(displayedTimers) do
-        if tId == timerId then return id end
+        if tId == timerId then
+            return id
+        end
     end
     return nil
 end
@@ -223,35 +252,47 @@ end
 function calculateDisplayPosition(displayId)
     local baseTop = 25
     local increment = 6
-    return { top = baseTop + ((displayId - 1) * increment), right = 3 }
+    return {top = baseTop + ((displayId - 1) * increment), right = 3}
 end
 
 if Config.EnableCommands then
-    RegisterCommand(Config.Commands.start, function(_, args)
-        if #args < 2 then
-            if Config.Debug then
-                print(string.format("^2[bs-countdown]^7 Usage: /%s <amount> <unit> [title]", Config.Commands.start))
+    RegisterCommand(
+        Config.Commands.start,
+        function(_, args)
+            if #args < 2 then
+                if Config.Debug then
+                    print(string.format("^2[bs-countdown]^7 Usage: /%s <amount> <unit> [title]", Config.Commands.start))
+                end
+                return
             end
-            return
-        end
-        local amount = tonumber(args[1])
-        local unit = args[2]
-        local title = #args > 2 and table.concat(args, " ", 3) or nil
-        startTimer(amount, unit, title)
-    end, false)
+            local amount = tonumber(args[1])
+            local unit = args[2]
+            local title = #args > 2 and table.concat(args, " ", 3) or nil
+            startTimer(amount, unit, title)
+        end,
+        false
+    )
 
-    RegisterCommand(Config.Commands.stop, function()
-        stopTimer()
-    end, false)
+    RegisterCommand(
+        Config.Commands.stop,
+        function()
+            stopTimer()
+        end,
+        false
+    )
 end
 
 if Config.Debug then
-    RegisterCommand('checktimers', function()
-        local count = 0
-        for id, timer in pairs(timers) do
-            count = count + 1
-            print(string.format("Timer #%d: %d seconds left", id, timer.timeLeft))
-        end
-        print(string.format("Total active timers: %d", count))
-    end, false)
+    RegisterCommand(
+        "checktimers",
+        function()
+            local count = 0
+            for id, timer in pairs(timers) do
+                count = count + 1
+                print(string.format("Timer #%d: %d seconds left", id, timer.timeLeft))
+            end
+            print(string.format("Total active timers: %d", count))
+        end,
+        false
+    )
 end

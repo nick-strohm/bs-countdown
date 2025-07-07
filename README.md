@@ -26,6 +26,7 @@
 You can control the timers from your other Lua scripts using these exports.
 
 **Example: Starting a timer from another resource**
+
 ```lua
 -- client_script.lua in another resource
 
@@ -46,24 +47,25 @@ exports['bs-countdown']:startTimer(30, 'sec')
 
 Starts a new timer.
 
--   **Parameters**:
-    -   `amount` (number): The duration of the timer (e.g., 5, 30).
-    -   `unit` (string): The unit of time ('sec', 'min', 'hr' - as defined in `Config.TimeUnits`).
-    -   `title` (string, optional): A custom title for the timer. If nil or empty, defaults to "Countdown".
--   **Returns**:
-    -   `success` (boolean): `true` if the timer was started successfully, `false` otherwise.
-    -   `timerId` (number or nil): A unique ID for the timer if successful, otherwise `nil`. This ID is used to stop the timer.
+- **Parameters**:
+  - `amount` (number): The duration of the timer (e.g., 5, 30).
+  - `unit` (string): The unit of time ('sec', 'min', 'hr' - as defined in `Config.TimeUnits`).
+  - `title` (string, optional): A custom title for the timer. If nil or empty, defaults to "Countdown".
+- **Returns**:
+  - `success` (boolean): `true` if the timer was started successfully, `false` otherwise.
+  - `timerId` (number or nil): A unique ID for the timer if successful, otherwise `nil`. This ID is used to stop the timer.
 
 ### `stopTimer(timerId)`
 
 Stops an active timer.
 
--   **Parameters**:
-    -   `timerId` (number): The ID of the timer to stop (obtained from `startTimer`).
--   **Returns**:
-    -   `success` (boolean): `true` if the timer was found and stopped, `false` otherwise.
+- **Parameters**:
+  - `timerId` (number): The ID of the timer to stop (obtained from `startTimer`).
+- **Returns**:
+  - `success` (boolean): `true` if the timer was found and stopped, `false` otherwise.
 
 **Example:**
+
 ```lua
 local timerToStop = 1337 -- Assuming timerId 1337 exists
 local stopped = exports['bs-countdown']:stopTimer(timerToStop)
@@ -78,12 +80,13 @@ end
 
 Checks if a specific timer is currently running.
 
--   **Parameters**:
-    -   `timerId` (number): The ID of the timer to check.
--   **Returns**:
-    -   `isRunning` (boolean): `true` if the timer with the given ID is active, `false` otherwise.
+- **Parameters**:
+  - `timerId` (number): The ID of the timer to check.
+- **Returns**:
+  - `isRunning` (boolean): `true` if the timer with the given ID is active, `false` otherwise.
 
 **Example:**
+
 ```lua
 local checkTimerId = 1
 local isRunning = exports['bs-countdown']:isTimerRunning(checkTimerId)
@@ -94,21 +97,38 @@ else
 end
 ```
 
+### Event `bs-countdown:timerEnded`
+
+Get informed if a timer ends. This triggers if you stop a timer by using `stopTimer(timerId)` or if it stops naturally by having no time left.
+
+- **Callback-Parameters:**
+  - `timerId` (number): The ID of the timer, which ended.
+  - `wasSuccessful` (boolean): `true` if the timer ended naturally, `false` if stopped early.
+
+**Example:**
+
+```lua
+AddEventHandler("bs-countdown:timerEnded", function(timerId, wasSuccessful)
+    print('Timer ' .. timerId .. ' ended. Was successful? ' .. tostring(wasSuccessful))
+end)
+```
+
 ## Chat Commands
 
 If `Config.EnableCommands` is `true`, the following commands are available:
 
--   **Start Timer**: `/<start_command_name> <amount> <unit> [title]`
-    -   Example: `/timer 10 sec 'Short Break'`
-    -   Example: `/timer 1 min` (title will default to "Countdown")
+- **Start Timer**: `/<start_command_name> <amount> <unit> [title]`
 
--   **Stop Timer**: `/<stop_command_name> <timerId>`
-    -   Example: `/stoptimer 1` (stops the timer with ID 1)
+  - Example: `/timer 10 sec 'Short Break'`
+  - Example: `/timer 1 min` (title will default to "Countdown")
+
+- **Stop Timer**: `/<stop_command_name> <timerId>`
+  - Example: `/stoptimer 1` (stops the timer with ID 1)
 
 ## Troubleshooting
 
--   **Timer Not Appearing**: Check the F8 console for Lua errors from `bs-countdown` or NUI errors (JavaScript errors).
--   **Commands Not Working**: Ensure `Config.EnableCommands` is `true` in `config.lua`.
+- **Timer Not Appearing**: Check the F8 console for Lua errors from `bs-countdown` or NUI errors (JavaScript errors).
+- **Commands Not Working**: Ensure `Config.EnableCommands` is `true` in `config.lua`.
 
 ## License
 
